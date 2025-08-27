@@ -1,239 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Collaborative Map</title>
-    <!-- Tailwind CSS for modern styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Multiplayer Tic-Tac-Toe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --primary-color: #4CAF50;
+            --secondary-color: #FF5722;
+            --board-bg: #1e1e1e;
+            --cell-bg: #2a2a2a;
+            --cell-hover: #3a3a3a;
+            --x-color: #81C784;
+            --o-color: #FFB74D;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1a202c;
-            color: #e2e8f0;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Prevent body scroll */
-        }
-        #map-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
-        #map {
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        .leaflet-container {
-            background-color: #1a202c; /* Match background color */
-        }
-        .leaflet-control-container .leaflet-draw-toolbar {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .leaflet-bar a, .leaflet-bar a:hover {
-            width: 3rem;
-            height: 3rem;
-            line-height: 3rem;
-            border-radius: 0.5rem;
-            background-color: #2d3748;
-            color: #a0aec0;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease-in-out;
-        }
-        .leaflet-bar a:hover {
-            background-color: #4a5568;
-            color: #fff;
-            transform: scale(1.05);
-        }
-        .leaflet-draw-section {
-            border-radius: 0.5rem;
-            padding: 0.5rem;
-            background-color: #2d3748;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        #controls-container {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .control-panel {
-            background-color: #2d3748;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .slider-label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        #chat-container {
-            position: absolute;
-            bottom: 1rem;
-            left: 1rem;
-            z-index: 1000;
-            width: 300px;
-            background-color: #2d3748;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            max-height: 400px;
-        }
-        #chat-messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column-reverse;
-            gap: 0.5rem;
-            padding-right: 0.5rem;
-        }
-        .chat-message {
-            background-color: #1a202c;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-        }
-        #chat-form {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        #user-info {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            z-index: 1000;
-            background-color: #2d3748;
-            padding: 0.75rem 1rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            font-weight: 600;
-            text-align: center;
-        }
-        #loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(26, 32, 44, 0.9);
-            z-index: 2000;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: flex;
             flex-direction: column;
-            gap: 1rem;
-            transition: opacity 0.3s ease-in-out;
+            align-items: center;
+            gap: 20px;
+            padding: 24px;
+            background-color: var(--board-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
         }
-        .lds-dual-ring {
-            display: inline-block;
-            width: 80px;
-            height: 80px;
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--primary-color);
         }
-        .lds-dual-ring:after {
-            content: " ";
-            display: block;
-            width: 64px;
-            height: 64px;
-            margin: 8px;
-            border-radius: 50%;
-            border: 6px solid #fff;
-            border-color: #fff transparent #fff transparent;
-            animation: lds-dual-ring 1.2s linear infinite;
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            padding: 8px;
+            background-color: var(--board-bg);
+            border-radius: 8px;
         }
-        @keyframes lds-dual-ring {
+
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.2s, transform 0.1s;
+            background-color: var(--cell-bg);
+            user-select: none;
+        }
+
+        .cell:hover {
+            background-color: var(--cell-hover);
+            transform: scale(1.03);
+        }
+
+        .cell.occupied {
+            cursor: not-allowed;
+        }
+
+        .cell.winning {
+            background-color: var(--primary-color) !important;
+            color: var(--board-bg);
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
             0% {
-                transform: rotate(0deg);
+                transform: scale(1.03);
             }
+
             100% {
-                transform: rotate(360deg);
+                transform: scale(1.05);
             }
+        }
+
+        .cell.x {
+            color: var(--x-color);
+        }
+
+        .cell.o {
+            color: var(--o-color);
+        }
+
+        #message {
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-align: center;
+            min-height: 25px;
+        }
+
+        .info-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .game-id-link {
+            font-weight: bold;
+            word-wrap: break-word;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--cell-bg);
+            border-radius: 8px;
+            background-color: var(--cell-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200">
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay">
-        <div class="lds-dual-ring"></div>
-        <p class="text-xl font-bold">Connecting to the global map...</p>
-    </div>
-
-    <!-- User ID Display -->
-    <div id="user-info">
-        User ID: <span id="user-id"></span>
-    </div>
-
-    <!-- Map Container -->
-    <div id="map-container">
-        <div id="map"></div>
-    </div>
-
-    <!-- Drawing Controls -->
-    <div id="controls-container">
-        <div class="control-panel">
-            <h3 class="font-bold text-lg text-center mb-2">Draw Controls</h3>
-            <!-- Color Picker -->
-            <div class="flex items-center gap-2">
-                <label for="color-picker" class="whitespace-nowrap">Color:</label>
-                <input type="color" id="color-picker" value="#3b82f6" class="w-full h-8 cursor-pointer rounded-md border-none">
-            </div>
-            <!-- Stroke Weight Slider -->
-            <div>
-                <div class="slider-label">
-                    <label for="stroke-weight">Stroke Weight:</label>
-                    <span id="stroke-value">5</span>
+<body>
+    <div class="container">
+        <h1>Tic-Tac-Toe</h1>
+        <div id="game-controls">
+            <div class="button-group" id="initial-buttons">
+                <button id="newGameBtn">Create New Game</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="text" id="gameIdInput" placeholder="Enter Game ID">
+                    <button id="joinGameBtn">Join</button>
                 </div>
-                <input type="range" id="stroke-weight" min="1" max="20" value="5" class="w-full accent-blue-500 cursor-pointer">
             </div>
-            <!-- Clear Button -->
-            <button id="clear-button" class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 transition-all text-white font-bold rounded-md shadow-md">
-                Clear All Drawings
-            </button>
+            <div class="info-container hidden" id="game-info">
+                <div id="game-id-display">
+                    Share this link to play: <br>
+                    <span class="game-id-link"></span>
+                </div>
+            </div>
         </div>
+
+        <div id="message"></div>
+
+        <div class="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <button id="resetBtn" class="hidden">Reset Game</button>
     </div>
 
-    <!-- Chat Container -->
-    <div id="chat-container">
-        <h3 class="font-bold text-lg mb-2 text-center">Global Chat</h3>
-        <div id="chat-messages" class="flex-grow overflow-y-auto pr-2">
-            <!-- Messages will be appended here -->
-        </div>
-        <form id="chat-form" class="mt-4 flex gap-2">
-            <input type="text" id="chat-input" placeholder="Say something..." class="flex-grow p-2 rounded-md bg-gray-700 border border-gray-600 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition-all text-white rounded-md font-bold">Send</button>
-        </form>
-    </div>
-
-    <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4xn+L2a8B7+7jY3Lz1t7f87Z6P6Q1v+u8dD+R7/N4o=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-p4xn+L2a8B7+7jY3Lz1t7f87Z6P6Q1v+u8dD+R7/N4o=" crossorigin=""></script>
-
-    <!-- Leaflet.Draw CSS & JS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
-        // Your Firebase config
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAy-mx305Zbi5gQ8fIqSI2OsuV61DRhqDM",
             authDomain: "dmultiplayergame-b444e.firebaseapp.com",
@@ -241,324 +223,257 @@
             projectId: "dmultiplayergame-b444e",
             storageBucket: "dmultiplayergame-b444e.firebasestorage.app",
             messagingSenderId: "318883314875",
-            appId: "1:318883314875:web:dbaaec76cb1cf9d9fabd9e",
-            measurementId: "G-5HX5VRB4H2"
+            appId: "1:318883314875:web:6cb825b6f707e681fabd9e",
+            measurementId: "G-J4HXZ47JM8"
         };
-        
-        // Global variables for Firebase and map
-        let app, auth, db, userId;
-        let map;
-        const drawnItems = new L.FeatureGroup();
-        const firestoreLayers = new Map();
-        
-        // DOM elements
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const userIdSpan = document.getElementById('user-id');
-        const colorPicker = document.getElementById('color-picker');
-        const strokeWeightInput = document.getElementById('stroke-weight');
-        const strokeValueSpan = document.getElementById('stroke-value');
-        const chatMessagesDiv = document.getElementById('chat-messages');
-        const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
-        
-        // Function to initialize Firebase
-        async function initializeFirebase() {
-            try {
-                if (Object.keys(firebaseConfig).length === 0) {
-                    console.error("Firebase config is missing or empty.");
-                    loadingOverlay.querySelector('p').textContent = "Error: Firebase config not found. Please ensure Firestore is set up correctly.";
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- Game Elements & Variables ---
+        const boardElement = document.querySelector('.board');
+        const cells = document.querySelectorAll('.cell');
+        const messageElement = document.getElementById('message');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const joinGameBtn = document.getElementById('joinGameBtn');
+        const gameIdInput = document.getElementById('gameIdInput');
+        const initialButtons = document.getElementById('initial-buttons');
+        const gameInfo = document.getElementById('game-info');
+        const gameIdDisplay = document.querySelector('.game-id-link');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let gameId = null;
+        let myPlayer = null; // 'X' or 'O'
+        let myUid = generateUid(); // A unique ID for this browser session
+
+        // --- Firebase References ---
+        let gameRef = null;
+
+        // --- Game State & Logic ---
+        const WINNING_COMBOS = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6] // Diagonals
+        ];
+
+        // Function to generate a simple unique ID for the current user
+        function generateUid() {
+            return Math.random().toString(36).substring(2, 9);
+        }
+
+        // Function to generate a random 6-character game ID
+        function generateGameId() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        // Function to check for a winner
+        function checkWinner(board) {
+            for (const combo of WINNING_COMBOS) {
+                const [a, b, c] = combo;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return combo; // Return the winning combination
+                }
+            }
+            return null;
+        }
+
+        // Function to check for a draw
+        function checkDraw(board) {
+            return board.every(cell => cell !== '');
+        }
+
+        // Function to initialize or join a game
+        async function setupGame(id) {
+            gameId = id;
+            gameRef = ref(db, 'games/' + gameId);
+
+            // Get the game state from the database once
+            const snapshot = await get(gameRef);
+
+            if (snapshot.exists()) {
+                // Game exists, try to join
+                const gameState = snapshot.val();
+                if (gameState.status === 'waiting' && gameState.playerX !== myUid) {
+                    // Game is waiting for a second player
+                    myPlayer = 'O';
+                    // Update the database to add player O and change status
+                    set(gameRef, {
+                        ...gameState,
+                        status: 'in-progress',
+                        playerO: myUid
+                    });
+                    messageElement.textContent = `You are Player O. Waiting for Player X to make a move...`;
+                } else if (gameState.playerX === myUid) {
+                    // Re-joining as player X
+                    myPlayer = 'X';
+                } else if (gameState.playerO === myUid) {
+                    // Re-joining as player O
+                    myPlayer = 'O';
+                } else {
+                    // Game is full or already finished
+                    messageElement.textContent = 'This game is full or does not exist.';
+                    gameId = null;
                     return;
                 }
-
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                // Sign in anonymously
-                await signInAnonymously(auth);
-
-                // Listen for authentication state changes
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        userIdSpan.textContent = userId;
-                        console.log("User authenticated with UID:", userId);
-                        
-                        // Wait for the map to be ready before proceeding
-                        if (map) {
-                           setupRealtimeListeners();
-                           loadingOverlay.style.opacity = '0';
-                           loadingOverlay.style.pointerEvents = 'none';
-                        }
-                    } else {
-                        console.log("User is signed out or auth state is pending.");
-                    }
-                });
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                loadingOverlay.querySelector('p').textContent = `Error initializing Firebase: ${error.message}`;
+            } else {
+                // Game does not exist, create a new one
+                myPlayer = 'X';
+                const initialGameState = {
+                    board: ['', '', '', '', '', '', '', '', ''],
+                    currentPlayer: 'X',
+                    status: 'waiting',
+                    winner: null,
+                    playerX: myUid,
+                    playerO: null
+                };
+                await set(gameRef, initialGameState);
+                messageElement.textContent = 'You are Player X. Share the link to play!';
             }
-        }
-        
-        // Function to initialize the Leaflet map and drawing controls
-        function initializeMap() {
-            map = L.map('map', {
-                center: [20, 0],
-                zoom: 2,
-                maxZoom: 18,
-                minZoom: 2,
-                layers: [L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                })],
-            });
 
-            map.addLayer(drawnItems);
-            
-            // Customize drawing tool icons
-            L.DrawToolbar.include({
-                get='<i class="fa fa-pencil" title="Draw"></i>'
-            })
-            L.drawLocal.draw.toolbar.actions.title = 'Cancel drawing';
-            L.drawLocal.draw.toolbar.actions.text = 'Cancel';
-            L.drawLocal.draw.toolbar.finish.title = 'Finish drawing';
-            L.drawLocal.draw.toolbar.finish.text = 'Finish';
-            L.drawLocal.draw.toolbar.undo.title = 'Delete last point drawn';
-            L.drawLocal.draw.toolbar.undo.text = 'Delete last point';
+            // Update the UI to show the game link
+            initialButtons.classList.add('hidden');
+            gameInfo.classList.remove('hidden');
+            gameIdDisplay.textContent = window.location.origin + window.location.pathname + '?id=' + gameId;
 
-            L.drawLocal.draw.toolbar.buttons.polyline = 'Draw a polyline';
-            L.drawLocal.draw.toolbar.buttons.polygon = 'Draw a polygon';
-            L.drawLocal.draw.toolbar.buttons.rectangle = 'Draw a rectangle';
-            L.drawLocal.draw.toolbar.buttons.circle = 'Draw a circle';
-            L.drawLocal.draw.toolbar.buttons.marker = 'Draw a marker';
-            L.drawLocal.draw.toolbar.buttons.circlemarker = 'Draw a circle marker';
-            
-            // Add custom icons to the drawing toolbar
-            const drawControl = new L.Control.Draw({
-                edit: {
-                    featureGroup: drawnItems
-                },
-                draw: {
-                    polyline: {
-                        shapeOptions: { color: colorPicker.value, weight: strokeWeightInput.value }
-                    },
-                    polygon: {
-                        shapeOptions: { color: colorPicker.value, weight: strokeWeightInput.value }
-                    },
-                    rectangle: {
-                        shapeOptions: { color: colorPicker.value, weight: strokeWeightInput.value }
-                    },
-                    circle: {
-                        shapeOptions: { color: colorPicker.value, weight: strokeWeightInput.value }
-                    },
-                    marker: {
-                        icon: L.divIcon({ className: 'my-div-icon', iconSize: [20, 20] })
-                    },
-                    circlemarker: {
-                        radius: 8,
-                        color: colorPicker.value,
-                        weight: strokeWeightInput.value,
-                        fillOpacity: 0.5
-                    }
+            // Start listening for real-time updates
+            onValue(gameRef, (snapshot) => {
+                const gameState = snapshot.val();
+                if (gameState) {
+                    renderGame(gameState);
+                } else {
+                    // Game was deleted, show a message and go back to initial state
+                    messageElement.textContent = 'The game you were in was closed.';
+                    setTimeout(() => {
+                        window.location.href = window.location.origin + window.location.pathname;
+                    }, 2000);
                 }
             });
-            map.addControl(drawControl);
-            
-            // Update drawing options on color or stroke weight change
-            colorPicker.addEventListener('input', updateDrawingOptions);
-            strokeWeightInput.addEventListener('input', updateDrawingOptions);
-            strokeValueSpan.textContent = strokeWeightInput.value;
+        }
 
-            function updateDrawingOptions() {
-                const color = colorPicker.value;
-                const weight = parseInt(strokeWeightInput.value);
-                strokeValueSpan.textContent = weight;
-                
-                // Update drawing control options for next drawings
-                drawControl.options.draw.polyline.shapeOptions.color = color;
-                drawControl.options.draw.polyline.shapeOptions.weight = weight;
-                drawControl.options.draw.polygon.shapeOptions.color = color;
-                drawControl.options.draw.polygon.shapeOptions.weight = weight;
-                drawControl.options.draw.rectangle.shapeOptions.color = color;
-                drawControl.options.draw.rectangle.shapeOptions.weight = weight;
-                drawControl.options.draw.circle.shapeOptions.color = color;
-                drawControl.options.draw.circle.shapeOptions.weight = weight;
-                drawControl.options.draw.circlemarker.color = color;
-                drawControl.options.draw.circlemarker.weight = weight;
+        // Function to render the game state to the UI
+        function renderGame(gameState) {
+            const { board, currentPlayer, status, winner } = gameState;
+
+            // Update cells
+            cells.forEach((cell, index) => {
+                cell.textContent = board[index];
+                cell.classList.remove('x', 'o', 'winning', 'occupied');
+                if (board[index] === 'X') {
+                    cell.classList.add('x', 'occupied');
+                } else if (board[index] === 'O') {
+                    cell.classList.add('o', 'occupied');
+                }
+            });
+
+            // Update message
+            if (winner) {
+                messageElement.textContent = `${winner} wins!`;
+                boardElement.classList.add('finished');
+                resetBtn.classList.remove('hidden');
+                // Highlight the winning cells
+                const winningCombo = checkWinner(board);
+                if (winningCombo) {
+                    winningCombo.forEach(index => {
+                        cells[index].classList.add('winning');
+                    });
+                }
+            } else if (status === 'draw') {
+                messageElement.textContent = "It's a draw!";
+                resetBtn.classList.remove('hidden');
+            } else if (status === 'waiting') {
+                messageElement.textContent = `Waiting for opponent...`;
+            } else if (status === 'in-progress') {
+                if (currentPlayer === myPlayer) {
+                    messageElement.textContent = 'Your turn!';
+                    boardElement.classList.remove('finished');
+                } else {
+                    messageElement.textContent = `Opponent's turn.`;
+                }
             }
+        }
 
-            // Event listener for when a drawing is created
-            map.on(L.Draw.Event.CREATED, function (e) {
-                const type = e.layerType;
-                const layer = e.layer;
-                const color = colorPicker.value;
-                const weight = parseInt(strokeWeightInput.value);
+        // Function to handle a cell click
+        async function handleCellClick(e) {
+            if (!gameId || !myPlayer) return;
 
-                // Add to the map and drawnItems group
-                drawnItems.addLayer(layer);
+            const index = e.target.getAttribute('data-index');
 
-                // Convert to GeoJSON for Firestore
-                const geoJson = layer.toGeoJSON();
-                const drawingData = {
-                    type,
-                    geoJson,
-                    color,
-                    weight,
-                    creatorId: userId,
-                    timestamp: new Date().toISOString()
+            // Get the current game state from the database
+            const snapshot = await get(gameRef);
+            const gameState = snapshot.val();
+
+            // Check if it's the current player's turn and the cell is empty
+            if (gameState.currentPlayer === myPlayer && gameState.board[index] === '' && gameState.status === 'in-progress') {
+                const newBoard = [...gameState.board];
+                newBoard[index] = myPlayer;
+
+                const winner = checkWinner(newBoard);
+                let newStatus = 'in-progress';
+                if (winner) {
+                    newStatus = 'finished';
+                } else if (checkDraw(newBoard)) {
+                    newStatus = 'draw';
+                }
+
+                const updates = {
+                    board: newBoard,
+                    currentPlayer: myPlayer === 'X' ? 'O' : 'X',
+                    status: newStatus,
+                    winner: winner ? myPlayer : null
                 };
 
-                // Save to Firestore
-                saveDrawingToFirestore(drawingData);
-            });
-
-            // Event listener for clear button
-            document.getElementById('clear-button').addEventListener('click', () => {
-                const modal = document.createElement('div');
-                modal.className = 'fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50';
-                modal.innerHTML = `
-                    <div class="bg-gray-800 p-6 rounded-lg shadow-xl text-center">
-                        <p class="text-xl font-bold mb-4">Are you sure?</p>
-                        <p class="mb-6">This will permanently delete all drawings for all users.</p>
-                        <div class="flex justify-center gap-4">
-                            <button id="cancel-clear" class="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-700 transition-all text-white font-bold">Cancel</button>
-                            <button id="confirm-clear" class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 transition-all text-white font-bold">Confirm Delete</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-
-                document.getElementById('cancel-clear').addEventListener('click', () => {
-                    document.body.removeChild(modal);
-                });
-
-                document.getElementById('confirm-clear').addEventListener('click', () => {
-                    document.body.removeChild(modal);
-                    clearAllDrawingsFromFirestore();
-                });
-            });
-        }
-        
-        // Function to set up real-time listeners for drawings and chat
-        function setupRealtimeListeners() {
-            // Listen for changes in the 'drawings' collection
-            const drawingsRef = collection(db, 'drawings');
-            onSnapshot(drawingsRef, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    const docId = change.doc.id;
-                    const data = change.doc.data();
-                    const geoJson = data.geoJson;
-
-                    if (change.type === "added") {
-                        // Add new drawing to the map
-                        if (!firestoreLayers.has(docId)) {
-                            const layer = L.geoJSON(geoJson, {
-                                style: { color: data.color, weight: data.weight },
-                                pointToLayer: (feature, latlng) => {
-                                    if (feature.properties.icon) {
-                                        return L.marker(latlng, { icon: L.divIcon({ className: 'my-div-icon', iconSize: [20, 20] }) });
-                                    }
-                                    return L.circleMarker(latlng, {
-                                        radius: 8,
-                                        fillColor: data.color,
-                                        color: data.color,
-                                        weight: data.weight,
-                                        opacity: 1,
-                                        fillOpacity: 0.5
-                                    });
-                                }
-                            });
-                            layer.addTo(map);
-                            firestoreLayers.set(docId, layer);
-                        }
-                    } else if (change.type === "removed") {
-                        // Remove drawing from the map
-                        if (firestoreLayers.has(docId)) {
-                            map.removeLayer(firestoreLayers.get(docId));
-                            firestoreLayers.delete(docId);
-                        }
-                    }
-                });
-            }, (error) => {
-                console.error("Error listening to drawings:", error);
-            });
-            
-            // Listen for changes in the 'chat' collection
-            const chatRef = collection(db, 'chat');
-            onSnapshot(chatRef, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const data = change.doc.data();
-                        const isUserMessage = data.userId === userId;
-                        addMessageToChat(data.message, data.userId, isUserMessage);
-                    }
-                });
-            }, (error) => {
-                console.error("Error listening to chat:", error);
-            });
-        }
-        
-        // Function to save a drawing to Firestore
-        async function saveDrawingToFirestore(drawingData) {
-            if (!userId) {
-                console.error("User not authenticated. Cannot save drawing.");
-                return;
-            }
-            try {
-                const drawingsRef = collection(db, 'drawings');
-                await addDoc(drawingsRef, drawingData);
-                console.log("Drawing saved to Firestore.");
-            } catch (e) {
-                console.error("Error adding document: ", e);
+                // Update the database
+                await set(gameRef, updates);
+            } else {
+                // Not your turn or invalid move
+                messageElement.textContent = "Invalid move or not your turn!";
             }
         }
-        
-        // Function to delete all drawings from Firestore
-        async function clearAllDrawingsFromFirestore() {
-            try {
-                const drawingsRef = collection(db, 'drawings');
-                const snapshot = await getDocs(drawingsRef);
-                const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
-                await Promise.all(deletePromises);
-                console.log("All drawings cleared from Firestore.");
-            } catch (e) {
-                console.error("Error clearing documents:", e);
-            }
-        }
-        
-        // Function to add a chat message to the UI
-        function addMessageToChat(message, senderId, isCurrentUser) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message ${isCurrentUser ? 'self-end bg-blue-600' : 'self-start bg-gray-700'}`;
-            messageDiv.style.maxWidth = '80%';
-            messageDiv.innerHTML = `<span class="font-bold">${isCurrentUser ? 'You' : senderId.substring(0, 5)}:</span> ${message}`;
-            chatMessagesDiv.prepend(messageDiv);
-        }
-        
-        // Handle chat form submission
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const message = chatInput.value.trim();
-            if (message && userId) {
-                try {
-                    const chatRef = collection(db, 'chat');
-                    await addDoc(chatRef, {
-                        message,
-                        userId,
-                        timestamp: new Date().toISOString()
-                    });
-                    chatInput.value = '';
-                } catch (e) {
-                    console.error("Error sending message:", e);
-                }
+
+        // --- Event Listeners ---
+        boardElement.addEventListener('click', handleCellClick);
+
+        newGameBtn.addEventListener('click', () => {
+            const newId = generateGameId();
+            window.location.href = window.location.origin + window.location.pathname + '?id=' + newId;
+        });
+
+        joinGameBtn.addEventListener('click', () => {
+            const inputId = gameIdInput.value.trim();
+            if (inputId) {
+                window.location.href = window.location.origin + window.location.pathname + '?id=' + inputId;
+            } else {
+                messageElement.textContent = 'Please enter a game ID.';
             }
         });
-        
-        // Initialize the app on window load
-        window.onload = function() {
-            initializeMap();
-            initializeFirebase();
-        };
-        
+
+        resetBtn.addEventListener('click', async () => {
+            if (gameRef) {
+                const initialGameState = {
+                    board: ['', '', '', '', '', '', '', '', ''],
+                    currentPlayer: 'X',
+                    status: 'in-progress',
+                    winner: null,
+                    playerX: myPlayer,
+                    playerO: myPlayer === 'X' ? null : myUid
+                };
+                await set(gameRef, initialGameState);
+                resetBtn.classList.add('hidden');
+            }
+        });
+
+        // --- Initial Load ---
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (id) {
+                setupGame(id);
+            } else {
+                messageElement.textContent = 'Create a new game or join one.';
+            }
+        });
     </script>
 </body>
+
 </html>
