@@ -1,3 +1,22 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, push, remove } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyAy-mx305Zbi5gQ8fIqSI2OsuV61DRhqDM",
+    authDomain: "dmultiplayergame-b444e.firebaseapp.com",
+    projectId: "dmultiplayergame-b444e",
+    storageBucket: "dmultiplayergame-b444e.firebasestorage.app",
+    messagingSenderId: "318883314875",
+    appId: "1:318883314875:web:6d31375135ea9b2efabd9e",
+    measurementId: "G-895EVCR281"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Global variables for the game state
 const players = {};
 let player, cursors;
 let joystick, joystickData = { x: 0, y: 0 };
@@ -5,9 +24,7 @@ let myPlayerId;
 let playerSpeed = 300;
 let jumpVelocity = 500;
 
-// The database instance will be available on the window object after the HTML loads
-let db;
-
+// Phaser Game Configuration
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
@@ -34,13 +51,6 @@ function preload() {
 }
 
 function create() {
-    // Get the database instance from the window object
-    db = window.db;
-    if (!db) {
-        console.error("Firebase database not initialized. Make sure the script in index.html runs first.");
-        return;
-    }
-    
     this.cameras.main.setBackgroundColor('#87ceeb');
 
     // Create static ground
@@ -48,7 +58,7 @@ function create() {
     this.physics.add.existing(ground, true);
 
     // Get a unique player ID
-    myPlayerId = db.ref('players').push().key;
+    myPlayerId = push(ref(db, 'players')).key;
     
     // Choose a random color for the player
     const myPlayerColor = Math.random() * 0xffffff;
@@ -66,7 +76,7 @@ function create() {
     player.label = myPlayerLabel;
 
     // Add local player to the Firebase database
-    db.ref('players/' + myPlayerId).set({
+    set(ref(db, 'players/' + myPlayerId), {
         x: player.x,
         y: player.y,
         color: myPlayerColor,
@@ -84,7 +94,7 @@ function create() {
     }
 
     // Listen for other players
-    db.ref('players').on('value', (snapshot) => {
+    onValue(ref(db, 'players'), (snapshot) => {
         const playersData = snapshot.val();
         if (playersData) {
             Object.keys(playersData).forEach(playerId => {
@@ -112,18 +122,22 @@ function create() {
     });
 
     // Clean up when a player leaves
-    db.ref('players').on('child_removed', (snapshot) => {
-        const playerId = snapshot.key;
-        if (players[playerId]) {
-            players[playerId].destroy();
-            players[playerId].label.destroy();
-            delete players[playerId];
-        }
+    onValue(ref(db, 'players'), (snapshot) => {
+        const playersData = snapshot.val();
+        Object.keys(players).forEach(playerId => {
+            if (!playersData || !playersData[playerId]) {
+                if (players[playerId]) {
+                    players[playerId].destroy();
+                    players[playerId].label.destroy();
+                    delete players[playerId];
+                }
+            }
+        });
     });
 
     // Clean up on window close
     window.addEventListener('beforeunload', () => {
-        db.ref('players/' + myPlayerId).remove();
+        remove(ref(db, 'players/' + myPlayerId));
     });
 }
 
@@ -156,8 +170,8 @@ function update() {
     player.label.y = player.y - 40;
 
     // Update Firebase with local player's data if it has changed
-    const playerRef = db.ref('players/' + myPlayerId);
-    playerRef.set({
+    const playerRef = ref(db, 'players/' + myPlayerId);
+    set(playerRef, {
         x: player.x,
         y: player.y,
         color: player.fillColor,
