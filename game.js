@@ -1,5 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getDatabase, ref, onValue, set, push, remove } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+import Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.esm.js";
+import nipplejs from "https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.1/nipplejs.min.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -23,8 +25,8 @@ let joystick, joystickData = { x: 0, y: 0 };
 let myPlayerId;
 let playerSpeed = 300;
 let jumpVelocity = 500;
-let game;
 let myPlayerName = "Player";
+let chatOpen = false;
 
 // Phaser Game Configuration
 const config = {
@@ -46,6 +48,8 @@ const config = {
     }
 };
 
+let game;
+
 // Wait for the DOM content to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     const startButton = document.getElementById('start-button');
@@ -64,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('mobile-ui').style.display = 'flex';
             // Start the Phaser game here
             game = new Phaser.Game(config);
+            setupChat();
         } else {
             alert("Please enter a name!");
         }
@@ -173,23 +178,26 @@ function create() {
 function update() {
     let velocityX = 0;
     
-    // Desktop Input
-    if (cursors.left.isDown) {
-        velocityX = -playerSpeed;
-    } else if (cursors.right.isDown) {
-        velocityX = playerSpeed;
-    }
-    
-    // Mobile Input
-    if (joystickData.x > 0) {
-        velocityX = playerSpeed * joystickData.x;
-    } else if (joystickData.x < 0) {
-        velocityX = playerSpeed * joystickData.x;
-    }
-    
-    // Jump Input
-    if (Phaser.Input.Keyboard.JustDown(cursors.up) && player.body.blocked.down) {
-        player.body.setVelocityY(-jumpVelocity);
+    // Disable player movement if chat is open
+    if (!chatOpen) {
+        // Desktop Input
+        if (cursors.left.isDown) {
+            velocityX = -playerSpeed;
+        } else if (cursors.right.isDown) {
+            velocityX = playerSpeed;
+        }
+        
+        // Mobile Input
+        if (joystickData.x > 0) {
+            velocityX = playerSpeed * joystickData.x;
+        } else if (joystickData.x < 0) {
+            velocityX = playerSpeed * joystickData.x;
+        }
+        
+        // Jump Input
+        if (Phaser.Input.Keyboard.JustDown(cursors.up) && player.body.blocked.down) {
+            player.body.setVelocityY(-jumpVelocity);
+        }
     }
     
     player.body.setVelocityX(velocityX);
@@ -224,25 +232,64 @@ function setupMobileUI(scene) {
         multitouch: true
     };
     
-    // Check if nipplejs is available on the global window object
-    if (window.nipplejs) {
-        joystick = window.nipplejs.create(options);
-        joystick.on('move', (evt, data) => {
-            joystickData.x = data.vector.x;
-            joystickData.y = data.vector.y;
-        });
-        joystick.on('end', () => {
-            joystickData.x = 0;
-            joystickData.y = 0;
-        });
-    } else {
-        console.error("nipplejs not found. Make sure the script is loaded.");
-    }
+    joystick = nipplejs.create(options);
+    joystick.on('move', (evt, data) => {
+        joystickData.x = data.vector.x;
+        joystickData.y = data.vector.y;
+    });
+    joystick.on('end', () => {
+        joystickData.x = 0;
+        joystickData.y = 0;
+    });
     
     // Jump button setup
     jumpButton.addEventListener('pointerdown', () => {
         if (player.body.blocked.down) {
             player.body.setVelocityY(-jumpVelocity);
+        }
+    });
+}
+
+function setupChat() {
+    const chatToggleButton = document.getElementById('chat-toggle-button');
+    const chatUI = document.getElementById('chat-ui');
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+
+    chatToggleButton.addEventListener('click', () => {
+        chatOpen = !chatOpen;
+        chatUI.style.display = chatOpen ? 'flex' : 'none';
+        if (chatOpen) {
+            chatInput.focus();
+        }
+    });
+
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+            const message = chatInput.value.trim();
+            // Push message to Firebase
+            push(ref(db, 'chat'), {
+                name: myPlayerName,
+                message: message,
+                timestamp: Date.now()
+            });
+            chatInput.value = '';
+        }
+    });
+
+    // Listen for new messages from Firebase
+    onValue(ref(db, 'chat'), (snapshot) => {
+        const messagesData = snapshot.val();
+        chatMessages.innerHTML = '';
+        if (messagesData) {
+            const sortedMessages = Object.values(messagesData).sort((a, b) => a.timestamp - b.timestamp);
+            sortedMessages.forEach(msg => {
+                const p = document.createElement('p');
+                p.textContent = `${msg.name}: ${msg.message}`;
+                chatMessages.appendChild(p);
+            });
+            // Auto-scroll to the bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     });
 }
