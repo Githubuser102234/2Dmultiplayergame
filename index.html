@@ -7,24 +7,14 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="intro-ui" style="display: flex;">
-        <h2>Enter Your Name</h2>
-        <input type="text" id="name-input" placeholder="Nickname">
-        <button id="start-button">Start Game</button>
-    </div>
-
-    <div id="game-container" style="display: none;"></div>
-
+    <div id="game-container"></div>
     <div id="mobile-ui">
         <div id="joystick-container"></div>
         <button id="jump-button">JUMP</button>
-        <button id="chat-toggle-button">💬</button>
     </div>
 
-    <div id="chat-ui" style="display: none;">
-        <div id="chat-messages"></div>
-        <input type="text" id="chat-input" placeholder="Type a message...">
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.1/nipplejs.min.js"></script>
 
     <script type="module" src="game.js"></script>
 </body>
