@@ -14,7 +14,7 @@ canvas {
     touch-action: none;
 }
 
-/* Nickname Modal Styling */
+/* New Nickname Modal Styling */
 #nickname-modal {
     position: absolute;
     top: 50%;
@@ -62,13 +62,12 @@ canvas {
     background-color: #2980b9;
 }
 
-/* Class to hide the modal */
+/* Class to hide elements */
 .hidden {
     display: none !important;
 }
 
-/* --- The rest of the existing CSS --- */
-
+/* The rest of the existing CSS */
 #mobile-ui {
     position: absolute;
     bottom: 20px;
