@@ -11,8 +11,63 @@ body {
 
 canvas {
     border: 2px solid #fff;
-    touch-action: none; /* Prevents default mobile browser actions */
+    touch-action: none;
 }
+
+/* Nickname Modal Styling */
+#nickname-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#nickname-modal h2 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+#nickname-input {
+    padding: 10px;
+    border: 1px solid #34495e;
+    border-radius: 5px;
+    background-color: #34495e;
+    color: #ecf0f1;
+    font-size: 1em;
+    text-align: center;
+}
+
+#start-game-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #3498db;
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#start-game-button:hover {
+    background-color: #2980b9;
+}
+
+/* Class to hide the modal */
+.hidden {
+    display: none !important;
+}
+
+/* --- The rest of the existing CSS --- */
 
 #mobile-ui {
     position: absolute;
@@ -22,7 +77,7 @@ canvas {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    pointer-events: none; /* Allows the game to be clicked through */
+    pointer-events: none;
 }
 
 #joystick-container {
@@ -46,6 +101,6 @@ canvas {
 
 @media (min-width: 768px) {
     #mobile-ui {
-        display: none; /* Hide mobile UI on desktop */
+        display: none;
     }
 }
