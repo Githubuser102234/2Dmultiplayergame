@@ -21,6 +21,7 @@ const players = {};
 let player, cursors;
 let joystick, joystickData = { x: 0, y: 0 };
 let myPlayerId;
+let myPlayerName;
 let playerSpeed = 300;
 let jumpVelocity = 500;
 
@@ -44,111 +45,42 @@ const config = {
     }
 };
 
-// The fix: Access Phaser from the global window object
-window.onload = () => {
-    // Start the game logic after the user enters their nickname
-    // A Phaser.Game instance will be created after the nickname is submitted.
-};
+// Listen for the DOM content to be fully loaded before setting up the UI logic
+document.addEventListener('DOMContentLoaded', () => {
+    const nicknameModal = document.getElementById('nickname-modal');
+    const nicknameInput = document.getElementById('nickname-input');
+    const startGameButton = document.getElementById('start-game-button');
+    const loadingSpinner = document.getElementById('loading-spinner');
+
+    // Initially show the modal and hide the spinner
+    nicknameModal.style.display = 'flex';
+    loadingSpinner.style.display = 'none';
+
+    // Event listener for the "Start Game" button
+    startGameButton.addEventListener('click', () => {
+        myPlayerName = nicknameInput.value.trim() || "Player"; // Use "Player" as default if empty
+        
+        // Hide the modal and show the spinner
+        nicknameModal.style.display = 'none';
+        loadingSpinner.style.display = 'block';
+
+        // Create and start the Phaser game instance
+        new Phaser.Game(config);
+    });
+});
 
 function preload() {
     // This is where you would load sprites, etc.
 }
 
 function create() {
-    // Get UI elements
-    const nicknameModal = document.getElementById('nickname-modal');
-    const nicknameInput = document.getElementById('nickname-input');
-    const startGameButton = document.getElementById('start-game-button');
-    const loadingSpinner = document.getElementById('loading-spinner');
+    // Hide the loading spinner once the game scene is created
+    document.getElementById('loading-spinner').style.display = 'none';
 
-    // Show the modal and hide the spinner initially
-    nicknameModal.style.display = 'flex';
-    loadingSpinner.style.display = 'none';
-    
-    // Listen for the "Start Game" button click
-    startGameButton.addEventListener('click', () => {
-        let myPlayerName = nicknameInput.value.trim();
-        if (myPlayerName.length > 0) {
-            nicknameModal.style.display = 'none'; // Hide the modal
-            loadingSpinner.style.display = 'block'; // Show a loading spinner
-            this.sys.game.canvas.style.display = 'block'; // Show the canvas once the game starts
-            
-            // Start the game with the entered nickname
-            startGame.call(this, myPlayerName);
-        } else {
-            // Provide a default name if the input is empty
-            myPlayerName = "Player";
-            nicknameModal.style.display = 'none';
-            loadingSpinner.style.display = 'block';
-            this.sys.game.canvas.style.display = 'block';
-            startGame.call(this, myPlayerName);
-        }
-    });
-
-    // Handle enter key on the input field
-    nicknameInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            startGameButton.click();
-        }
-    });
-    
-    // Initially hide the canvas until the game starts
-    this.sys.game.canvas.style.display = 'none';
-
-    // Set up the scene background and physics
+    // Set up the scene background and ground
     this.cameras.main.setBackgroundColor('#87ceeb');
     const ground = this.add.rectangle(0, this.game.config.height - 50, this.game.config.width * 2, 100, 0x008000);
     this.physics.add.existing(ground, true);
-
-    // Initial setup for the game state
-    // These listeners will start working once a player is created in startGame()
-    onValue(ref(db, 'players'), (snapshot) => {
-        const playersData = snapshot.val();
-        if (playersData) {
-            Object.keys(playersData).forEach(playerId => {
-                if (playerId !== myPlayerId) {
-                    if (!players[playerId]) {
-                        const remotePlayer = this.add.rectangle(playersData[playerId].x, playersData[playerId].y, 40, 60, playersData[playerId].color);
-                        this.physics.add.existing(remotePlayer);
-                        remotePlayer.body.immovable = true;
-                        remotePlayer.label = this.add.text(0, 0, playersData[playerId].name, { fontSize: '16px', fill: '#ffffff', backgroundColor: '#00000088' }).setOrigin(0.5);
-                        players[playerId] = remotePlayer;
-                    }
-                    players[playerId].x = playersData[playerId].x;
-                    players[playerId].y = playersData[playerId].y;
-                    players[playerId].body.setVelocityX(playersData[playerId].vx);
-                    players[playerId].body.setVelocityY(playersData[playerId].vy);
-                    
-                    players[playerId].label.x = players[playerId].x;
-                    players[playerId].label.y = players[playerId].y - 40;
-                }
-            });
-        }
-    });
-
-    onValue(ref(db, 'players'), (snapshot) => {
-        const playersData = snapshot.val();
-        Object.keys(players).forEach(playerId => {
-            if (!playersData || !playersData[playerId]) {
-                if (players[playerId]) {
-                    players[playerId].destroy();
-                    players[playerId].label.destroy();
-                    delete players[playerId];
-                }
-            }
-        });
-    });
-
-    window.addEventListener('beforeunload', () => {
-        if (myPlayerId) {
-            remove(ref(db, 'players/' + myPlayerId));
-        }
-    });
-}
-
-// Function to start the game after the nickname is submitted
-function startGame(myPlayerName) {
-    const scene = this;
 
     // Get a unique player ID
     myPlayerId = push(ref(db, 'players')).key;
@@ -157,14 +89,14 @@ function startGame(myPlayerName) {
     const myPlayerColor = Math.random() * 0xffffff;
     
     // Create the local player's block
-    const myPlayerBlock = scene.add.rectangle(Phaser.Math.Between(100, scene.game.config.width - 100), 50, 40, 60, myPlayerColor);
-    scene.physics.add.existing(myPlayerBlock);
+    const myPlayerBlock = this.add.rectangle(Phaser.Math.Between(100, this.game.config.width - 100), 50, 40, 60, myPlayerColor);
+    this.physics.add.existing(myPlayerBlock);
     myPlayerBlock.body.collideWorldBounds = true;
     myPlayerBlock.body.gravity.y = 800;
     player = myPlayerBlock;
 
     // Create the player's name label
-    const myPlayerLabel = scene.add.text(0, 0, myPlayerName, { fontSize: '16px', fill: '#ffffff', backgroundColor: '#00000088' }).setOrigin(0.5);
+    const myPlayerLabel = this.add.text(0, 0, myPlayerName, { fontSize: '16px', fill: '#ffffff', backgroundColor: '#00000088' }).setOrigin(0.5);
     player.label = myPlayerLabel;
 
     // Add local player to the Firebase database
@@ -178,12 +110,61 @@ function startGame(myPlayerName) {
     });
 
     // Keyboard input for desktop
-    cursors = scene.input.keyboard.createCursorKeys();
+    cursors = this.input.keyboard.createCursorKeys();
 
     // Mobile UI Setup
-    if (scene.sys.game.device.os.android || scene.sys.game.device.os.iOS) {
-        setupMobileUI(scene);
+    if (this.sys.game.device.os.android || this.sys.game.device.os.iOS) {
+        setupMobileUI(this);
     }
+
+    // Listen for other players
+    onValue(ref(db, 'players'), (snapshot) => {
+        const playersData = snapshot.val();
+        if (playersData) {
+            Object.keys(playersData).forEach(playerId => {
+                if (playerId !== myPlayerId) {
+                    if (!players[playerId]) {
+                        // Create new remote player
+                        const remotePlayer = this.add.rectangle(playersData[playerId].x, playersData[playerId].y, 40, 60, playersData[playerId].color);
+                        this.physics.add.existing(remotePlayer);
+                        remotePlayer.body.immovable = true;
+                        remotePlayer.label = this.add.text(0, 0, playersData[playerId].name, { fontSize: '16px', fill: '#ffffff', backgroundColor: '#00000088' }).setOrigin(0.5);
+                        players[playerId] = remotePlayer;
+                    }
+                    // Update remote player position
+                    players[playerId].x = playersData[playerId].x;
+                    players[playerId].y = playersData[playerId].y;
+                    players[playerId].body.setVelocityX(playersData[playerId].vx);
+                    players[playerId].body.setVelocityY(playersData[playerId].vy);
+                    
+                    // Update label position
+                    players[playerId].label.x = players[playerId].x;
+                    players[playerId].label.y = players[playerId].y - 40;
+                }
+            });
+        }
+    });
+
+    // Clean up when a player leaves
+    onValue(ref(db, 'players'), (snapshot) => {
+        const playersData = snapshot.val();
+        Object.keys(players).forEach(playerId => {
+            if (!playersData || !playersData[playerId]) {
+                if (players[playerId]) {
+                    players[playerId].destroy();
+                    players[playerId].label.destroy();
+                    delete players[playerId];
+                }
+            }
+        });
+    });
+
+    // Clean up on window close or refresh
+    window.addEventListener('beforeunload', () => {
+        if (myPlayerId) {
+            remove(ref(db, 'players/' + myPlayerId));
+        }
+    });
 }
 
 function update() {
