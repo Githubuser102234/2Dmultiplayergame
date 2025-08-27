@@ -7,17 +7,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- The Nickname Modal UI -->
-    <div id="nickname-modal">
-        <div class="modal-content">
-            <h2>Enter your nickname</h2>
-            <input type="text" id="nickname-input" placeholder="Your name" maxlength="15">
-            <button id="start-game-button">Start Game</button>
-            <div id="loading-spinner" class="spinner"></div>
-        </div>
+    <div id="game-container"></div>
+    
+    <!-- Nickname input UI -->
+    <div id="nickname-ui">
+        <label for="nickname-input">Nickname:</label>
+        <input type="text" id="nickname-input" placeholder="Enter your name" maxlength="15">
+        <button id="save-nickname-button">Save</button>
     </div>
 
-    <div id="game-container"></div>
     <div id="mobile-ui">
         <div id="joystick-container"></div>
         <button id="jump-button">JUMP</button>
