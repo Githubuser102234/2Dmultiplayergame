@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Block Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container"></div>
+    <div id="mobile-ui">
+        <div id="joystick-container"></div>
+        <button id="jump-button">JUMP</button>
+    </div>
+
+    <script type="module" src="game.js"></script>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAy-mx305Zbi5gQ8fIqSI2OsuV61DRhqDM",
+            authDomain: "dmultiplayergame-b444e.firebaseapp.com",
+            projectId: "dmultiplayergame-b444e",
+            storageBucket: "dmultiplayergame-b444e.firebasestorage.app",
+            messagingSenderId: "318883314875",
+            appId: "1:318883314875:web:6d31375135ea9b2efabd9e",
+            measurementId: "G-895EVCR281"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        window.db = getDatabase(app);
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.1/nipplejs.min.js"></script>
+</body>
+</html>
