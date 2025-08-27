@@ -233,7 +233,7 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
-        // IMPORTANT: Replace this with your own Firebase config
+        // Your Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyAy-mx305Zbi5gQ8fIqSI2OsuV61DRhqDM",
             authDomain: "dmultiplayergame-b444e.firebaseapp.com",
@@ -250,7 +250,6 @@
         let map;
         const drawnItems = new L.FeatureGroup();
         const firestoreLayers = new Map();
-        const appId = firebaseConfig.projectId;
         
         // DOM elements
         const loadingOverlay = document.getElementById('loading-overlay');
