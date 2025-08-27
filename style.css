@@ -7,11 +7,42 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    flex-direction: column; /* To stack the intro UI and game container */
 }
 
 canvas {
     border: 2px solid #fff;
-    touch-action: none; /* Prevents default mobile browser actions */
+    touch-action: none;
+    display: none; /* Hidden until the game starts */
+}
+
+#intro-ui {
+    color: white;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+}
+
+#name-input {
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    font-size: 1.2em;
+}
+
+#start-button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    font-size: 1.2em;
+    cursor: pointer;
 }
 
 #mobile-ui {
@@ -19,10 +50,10 @@ canvas {
     bottom: 20px;
     left: 20px;
     right: 20px;
-    display: flex;
+    display: none; /* Hidden until the game starts */
     justify-content: space-between;
     align-items: flex-end;
-    pointer-events: none; /* Allows the game to be clicked through */
+    pointer-events: none;
 }
 
 #joystick-container {
@@ -46,6 +77,6 @@ canvas {
 
 @media (min-width: 768px) {
     #mobile-ui {
-        display: none; /* Hide mobile UI on desktop */
+        display: none;
     }
 }
