@@ -23,6 +23,8 @@ let joystick, joystickData = { x: 0, y: 0 };
 let myPlayerId;
 let playerSpeed = 300;
 let jumpVelocity = 500;
+let game;
+let myPlayerName = "Player";
 
 // Phaser Game Configuration
 const config = {
@@ -44,22 +46,23 @@ const config = {
     }
 };
 
-let game;
-let myPlayerName = "Player";
-
 // Wait for the DOM content to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     const startButton = document.getElementById('start-button');
     const nameInput = document.getElementById('name-input');
     const introUI = document.getElementById('intro-ui');
+    const canvas = document.querySelector('canvas');
 
     startButton.addEventListener('click', () => {
         const name = nameInput.value.trim();
         if (name) {
             myPlayerName = name;
             introUI.style.display = 'none';
-            document.querySelector('canvas').style.display = 'block';
+            if (canvas) {
+                canvas.style.display = 'block';
+            }
             document.getElementById('mobile-ui').style.display = 'flex';
+            // Start the Phaser game here
             game = new Phaser.Game(config);
         } else {
             alert("Please enter a name!");
