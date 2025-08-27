@@ -230,19 +230,27 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
+        // IMPORTANT: Replace this with your own Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAy-mx305Zbi5gQ8fIqSI2OsuV61DRhqDM",
+            authDomain: "dmultiplayergame-b444e.firebaseapp.com",
+            databaseURL: "https://dmultiplayergame-b444e-default-rtdb.firebaseio.com",
+            projectId: "dmultiplayergame-b444e",
+            storageBucket: "dmultiplayergame-b444e.firebasestorage.app",
+            messagingSenderId: "318883314875",
+            appId: "1:318883314875:web:dbaaec76cb1cf9d9fabd9e",
+            measurementId: "G-5HX5VRB4H2"
+        };
+        
         // Global variables for Firebase and map
         let app, auth, db, userId;
         let map;
         const drawnItems = new L.FeatureGroup();
         const firestoreLayers = new Map();
-        
-        // Use the global variables provided by the canvas environment
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const appId = firebaseConfig.projectId;
         
         // DOM elements
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -267,12 +275,8 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // Use the initial custom auth token if available, otherwise sign in anonymously
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Sign in anonymously
+                await signInAnonymously(auth);
 
                 // Listen for authentication state changes
                 onAuthStateChanged(auth, async (user) => {
@@ -438,7 +442,7 @@
         // Function to set up real-time listeners for drawings and chat
         function setupRealtimeListeners() {
             // Listen for changes in the 'drawings' collection
-            const drawingsRef = collection(db, `artifacts/${appId}/public/data/drawings`);
+            const drawingsRef = collection(db, 'drawings');
             onSnapshot(drawingsRef, (snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     const docId = change.doc.id;
@@ -480,7 +484,7 @@
             });
             
             // Listen for changes in the 'chat' collection
-            const chatRef = collection(db, `artifacts/${appId}/public/data/chat`);
+            const chatRef = collection(db, 'chat');
             onSnapshot(chatRef, (snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === "added") {
@@ -497,7 +501,7 @@
         // Function to save a drawing to Firestore
         async function saveDrawingToFirestore(drawingData) {
             try {
-                const drawingsRef = collection(db, `artifacts/${appId}/public/data/drawings`);
+                const drawingsRef = collection(db, 'drawings');
                 await addDoc(drawingsRef, drawingData);
                 console.log("Drawing saved to Firestore.");
             } catch (e) {
@@ -508,7 +512,7 @@
         // Function to delete all drawings from Firestore
         async function clearAllDrawingsFromFirestore() {
             try {
-                const drawingsRef = collection(db, `artifacts/${appId}/public/data/drawings`);
+                const drawingsRef = collection(db, 'drawings');
                 const snapshot = await getDocs(drawingsRef);
                 const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
                 await Promise.all(deletePromises);
@@ -533,7 +537,7 @@
             const message = chatInput.value.trim();
             if (message && userId) {
                 try {
-                    const chatRef = collection(db, `artifacts/${appId}/public/data/chat`);
+                    const chatRef = collection(db, 'chat');
                     await addDoc(chatRef, {
                         message,
                         userId,
