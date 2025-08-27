@@ -1,5 +1,5 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, push, remove } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, push, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 import Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.esm.js";
 import nipplejs from "https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.1/nipplejs.min.js";
 
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const startButton = document.getElementById('start-button');
     const nameInput = document.getElementById('name-input');
     const introUI = document.getElementById('intro-ui');
-    const gameContainer = document.getElementById('game-container'); // Use game-container instead of canvas
+    const gameContainer = document.getElementById('game-container');
 
     startButton.addEventListener('click', () => {
         const name = nameInput.value.trim();
@@ -95,15 +95,15 @@ function create() {
 
     // Get a unique player ID
     myPlayerId = push(ref(db, 'players')).key;
-    
+
     // Choose a random color for the player
     const myPlayerColor = Math.random() * 0xffffff;
-    
+
     // Create the local player's block
     const myPlayerBlock = this.add.rectangle(Phaser.Math.Between(100, this.game.config.width - 100), 50, 40, 60, myPlayerColor);
     this.physics.add.existing(myPlayerBlock);
     myPlayerBlock.body.collideWorldBounds = true;
-    myPlayerBlock.body.gravity.y = 800; // This is a duplicate; gravity is set in config
+    myPlayerBlock.body.gravity.y = 800;
     player = myPlayerBlock;
 
     // Create the player's name label
@@ -127,7 +127,7 @@ function create() {
     if (this.sys.game.device.os.android || this.sys.game.device.os.iOS) {
         setupMobileUI(this);
     }
-    
+
     // BUG FIX: Add a collider between the player and the ground
     this.physics.add.collider(player, ground);
 
@@ -137,7 +137,7 @@ function create() {
         if (playersData) {
             // BUG FIX: Create a set of current player IDs to check for removed players
             const currentPlayers = new Set(Object.keys(playersData));
-            
+
             Object.keys(playersData).forEach(playerId => {
                 if (playerId !== myPlayerId) {
                     if (!players[playerId]) {
@@ -153,13 +153,13 @@ function create() {
                     players[playerId].y = playersData[playerId].y;
                     players[playerId].body.setVelocityX(playersData[playerId].vx);
                     players[playerId].body.setVelocityY(playersData[playerId].vy);
-                    
+
                     // Update label position
                     players[playerId].label.x = players[playerId].x;
                     players[playerId].label.y = players[playerId].y - 40;
                 }
             });
-            
+
             // Clean up when a player leaves
             Object.keys(players).forEach(playerId => {
                 if (!currentPlayers.has(playerId)) {
@@ -190,7 +190,7 @@ function create() {
 
 function update() {
     let velocityX = 0;
-    
+
     // Disable player movement if chat is open
     if (!chatOpen) {
         // Desktop Input
@@ -199,22 +199,22 @@ function update() {
         } else if (cursors.right.isDown) {
             velocityX = playerSpeed;
         }
-        
+
         // Mobile Input
         if (joystickData.x > 0) {
             velocityX = playerSpeed; // BUG FIX: Fixed speed for mobile
         } else if (joystickData.x < 0) {
             velocityX = -playerSpeed; // BUG FIX: Fixed speed for mobile
         }
-        
+
         // Jump Input
         if (Phaser.Input.Keyboard.JustDown(cursors.up) && player.body.blocked.down) {
             player.body.setVelocityY(-jumpVelocity);
         }
     }
-    
+
     player.body.setVelocityX(velocityX);
-    
+
     // BUG FIX: Check if player and label exist before updating
     if (player && player.label) {
         // Update player label position
@@ -250,7 +250,7 @@ function setupMobileUI(scene) {
         color: 'white',
         multitouch: true
     };
-    
+
     joystick = nipplejs.create(options);
     joystick.on('move', (evt, data) => {
         // BUG FIX: Changed joystick data logic to better control player speed
@@ -262,7 +262,7 @@ function setupMobileUI(scene) {
         joystickData.x = 0;
         joystickData.y = 0;
     });
-    
+
     // Jump button setup
     jumpButton.addEventListener('pointerdown', () => {
         if (player && player.body.blocked.down) { // BUG FIX: Check if player exists
