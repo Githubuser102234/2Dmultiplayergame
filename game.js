@@ -44,7 +44,11 @@ const config = {
     }
 };
 
-const game = new Phaser.Game(config);
+// The fix: Access Phaser from the global window object
+// This ensures the game is created only after the Phaser library is loaded
+window.onload = () => {
+    const game = new Phaser.Game(config);
+};
 
 function preload() {
     // This is where you would load sprites, etc.
