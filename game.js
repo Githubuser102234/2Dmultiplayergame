@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = nameInput.value.trim();
         if (name) {
             myPlayerName = name;
+            // CORRECTED: Hide the intro UI
             introUI.style.display = 'none';
             // CORRECTED: Start the Phaser game here
             game = new Phaser.Game(config);
