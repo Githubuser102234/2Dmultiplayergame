@@ -44,19 +44,40 @@ const config = {
     }
 };
 
-// The fix: Access Phaser from the global window object
-window.onload = () => {
-    const game = new Phaser.Game(config);
-};
+let game;
+let myPlayerName = "Player";
+
+// Wait for the DOM content to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const startButton = document.getElementById('start-button');
+    const nameInput = document.getElementById('name-input');
+    const introUI = document.getElementById('intro-ui');
+
+    startButton.addEventListener('click', () => {
+        const name = nameInput.value.trim();
+        if (name) {
+            myPlayerName = name;
+            introUI.style.display = 'none';
+            document.querySelector('canvas').style.display = 'block';
+            document.getElementById('mobile-ui').style.display = 'flex';
+            game = new Phaser.Game(config);
+        } else {
+            alert("Please enter a name!");
+        }
+    });
+
+    nameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            startButton.click();
+        }
+    });
+});
 
 function preload() {
     // This is where you would load sprites, etc.
 }
 
 function create() {
-    // Prompt for nickname before anything else
-    const myPlayerName = prompt("Enter your name:", "Player");
-    
     this.cameras.main.setBackgroundColor('#87ceeb');
 
     // Create static ground
@@ -140,7 +161,7 @@ function create() {
         });
     });
 
-    // Clean up on window close or refresh
+    // Clean up on window close
     window.addEventListener('beforeunload', () => {
         remove(ref(db, 'players/' + myPlayerId));
     });
@@ -189,7 +210,7 @@ function update() {
 function setupMobileUI(scene) {
     const joystickContainer = document.getElementById('joystick-container');
     const jumpButton = document.getElementById('jump-button');
-    document.getElementById('mobile-ui').style.pointerEvents = 'auto';
+    document.getElementById('mobile-ui').style.display = 'flex';
 
     // Joystick setup
     const options = {
@@ -199,15 +220,21 @@ function setupMobileUI(scene) {
         color: 'white',
         multitouch: true
     };
-    joystick = nipplejs.create(options);
-    joystick.on('move', (evt, data) => {
-        joystickData.x = data.vector.x;
-        joystickData.y = data.vector.y;
-    });
-    joystick.on('end', () => {
-        joystickData.x = 0;
-        joystickData.y = 0;
-    });
+    
+    // Check if nipplejs is available on the global window object
+    if (window.nipplejs) {
+        joystick = window.nipplejs.create(options);
+        joystick.on('move', (evt, data) => {
+            joystickData.x = data.vector.x;
+            joystickData.y = data.vector.y;
+        });
+        joystick.on('end', () => {
+            joystickData.x = 0;
+            joystickData.y = 0;
+        });
+    } else {
+        console.error("nipplejs not found. Make sure the script is loaded.");
+    }
     
     // Jump button setup
     jumpButton.addEventListener('pointerdown', () => {
