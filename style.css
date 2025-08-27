@@ -11,10 +11,10 @@ body {
     font-family: sans-serif;
 }
 
+/* FIX: Removed the display: none rule for the canvas */
 canvas {
     border: 2px solid #fff;
     touch-action: none;
-    display: none;
 }
 
 #intro-ui {
