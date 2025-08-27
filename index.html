@@ -171,12 +171,68 @@
         .hidden {
             display: none;
         }
+
+        .chat-container {
+            width: 100%;
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--cell-bg);
+            border-radius: 8px;
+            padding: 10px;
+            box-sizing: border-box;
+            gap: 10px;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: var(--cell-hover);
+            border-radius: 4px;
+        }
+
+        .chat-message {
+            font-size: 0.9rem;
+            line-height: 1.3;
+        }
+
+        .chat-message .player-name {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .chat-input-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .chat-input-group input {
+            flex-grow: 1;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <h1>Tic-Tac-Toe</h1>
+        
+        <div class="info-container" id="player-name-container">
+            <input type="text" id="playerNameInput" placeholder="Enter your name" />
+        </div>
+        
         <div id="game-controls">
             <div class="button-group" id="initial-buttons">
                 <button id="newGameBtn">Create New Game</button>
@@ -206,6 +262,14 @@
             <div class="cell" data-index="7"></div>
             <div class="cell" data-index="8"></div>
         </div>
+        
+        <div class="chat-container">
+            <ul class="chat-messages" id="chat-messages"></ul>
+            <div class="chat-input-group">
+                <input type="text" id="chatInput" placeholder="Type a message..." />
+                <button id="chatSendBtn">Send</button>
+            </div>
+        </div>
 
         <button id="resetBtn" class="hidden">Reset Game</button>
     </div>
@@ -213,7 +277,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+        import { getDatabase, ref, get, set, onValue, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -242,13 +306,19 @@
         const gameInfo = document.getElementById('game-info');
         const gameIdDisplay = document.querySelector('.game-id-link');
         const resetBtn = document.getElementById('resetBtn');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatMessagesList = document.getElementById('chat-messages');
 
         let gameId = null;
         let myPlayer = null; // 'X' or 'O'
         let myUid = generateUid(); // A unique ID for this browser session
+        let myName = 'Player ' + myUid;
 
         // --- Firebase References ---
         let gameRef = null;
+        let chatRef = null;
 
         // --- Game State & Logic ---
         const WINNING_COMBOS = [
@@ -287,37 +357,39 @@
         async function setupGame(id) {
             gameId = id;
             gameRef = ref(db, 'games/' + gameId);
+            chatRef = ref(db, 'games/' + gameId + '/chat');
 
             // Get the game state from the database once
             const snapshot = await get(gameRef);
 
             if (snapshot.exists()) {
-                // Game exists, try to join
                 const gameState = snapshot.val();
                 if (gameState.status === 'waiting' && gameState.playerX !== myUid) {
-                    // Game is waiting for a second player
                     myPlayer = 'O';
-                    // Update the database to add player O and change status
                     set(gameRef, {
                         ...gameState,
                         status: 'in-progress',
-                        playerO: myUid
+                        playerO: myUid,
+                        playerNames: {
+                            ...gameState.playerNames,
+                            [myUid]: myName
+                        }
                     });
                     messageElement.textContent = `You are Player O. Waiting for Player X to make a move...`;
                 } else if (gameState.playerX === myUid) {
-                    // Re-joining as player X
                     myPlayer = 'X';
                 } else if (gameState.playerO === myUid) {
-                    // Re-joining as player O
                     myPlayer = 'O';
                 } else {
-                    // Game is full or already finished
                     messageElement.textContent = 'This game is full or does not exist.';
                     gameId = null;
                     return;
                 }
+                
+                // Set the player's name in the database
+                set(ref(db, `games/${gameId}/playerNames/${myUid}`), myName);
+                
             } else {
-                // Game does not exist, create a new one
                 myPlayer = 'X';
                 const initialGameState = {
                     board: ['', '', '', '', '', '', '', '', ''],
@@ -325,35 +397,46 @@
                     status: 'waiting',
                     winner: null,
                     playerX: myUid,
-                    playerO: null
+                    playerO: null,
+                    playerNames: {
+                        [myUid]: myName
+                    },
+                    chat: {}
                 };
                 await set(gameRef, initialGameState);
                 messageElement.textContent = 'You are Player X. Share the link to play!';
             }
 
-            // Update the UI to show the game link
             initialButtons.classList.add('hidden');
             gameInfo.classList.remove('hidden');
+            document.getElementById('playerNameInput').disabled = true;
             gameIdDisplay.textContent = window.location.origin + window.location.pathname + '?id=' + gameId;
 
-            // Start listening for real-time updates
+            // Start listening for real-time updates for the game state
             onValue(gameRef, (snapshot) => {
                 const gameState = snapshot.val();
                 if (gameState) {
                     renderGame(gameState);
                 } else {
-                    // Game was deleted, show a message and go back to initial state
                     messageElement.textContent = 'The game you were in was closed.';
                     setTimeout(() => {
                         window.location.href = window.location.origin + window.location.pathname;
                     }, 2000);
                 }
             });
+
+            // Start listening for real-time chat updates
+            onValue(chatRef, (snapshot) => {
+                const messages = snapshot.val();
+                renderChat(messages);
+            });
         }
 
         // Function to render the game state to the UI
         function renderGame(gameState) {
-            const { board, currentPlayer, status, winner } = gameState;
+            const { board, currentPlayer, status, winner, playerNames, playerX, playerO } = gameState;
+            const otherUid = myUid === playerX ? playerO : playerX;
+            const otherName = playerNames && playerNames[otherUid] ? playerNames[otherUid] : 'Opponent';
 
             // Update cells
             cells.forEach((cell, index) => {
@@ -368,10 +451,10 @@
 
             // Update message
             if (winner) {
-                messageElement.textContent = `${winner} wins!`;
+                const winnerName = playerNames[winner === 'X' ? playerX : playerO];
+                messageElement.textContent = `${winnerName} wins!`;
                 boardElement.classList.add('finished');
                 resetBtn.classList.remove('hidden');
-                // Highlight the winning cells
                 const winningCombo = checkWinner(board);
                 if (winningCombo) {
                     winningCombo.forEach(index => {
@@ -382,14 +465,34 @@
                 messageElement.textContent = "It's a draw!";
                 resetBtn.classList.remove('hidden');
             } else if (status === 'waiting') {
-                messageElement.textContent = `Waiting for opponent...`;
+                messageElement.textContent = `Waiting for ${otherName} to join...`;
             } else if (status === 'in-progress') {
+                const currentPlayerName = playerNames[currentPlayer === 'X' ? playerX : playerO];
                 if (currentPlayer === myPlayer) {
                     messageElement.textContent = 'Your turn!';
                     boardElement.classList.remove('finished');
                 } else {
-                    messageElement.textContent = `Opponent's turn.`;
+                    messageElement.textContent = `${currentPlayerName}'s turn.`;
                 }
+            }
+        }
+        
+        // Function to render chat messages
+        function renderChat(messages) {
+            chatMessagesList.innerHTML = ''; // Clear previous messages
+            if (messages) {
+                const sortedMessages = Object.values(messages).sort((a, b) => a.timestamp - b.timestamp);
+                sortedMessages.forEach(msg => {
+                    const li = document.createElement('li');
+                    li.classList.add('chat-message');
+                    const nameSpan = document.createElement('span');
+                    nameSpan.classList.add('player-name');
+                    nameSpan.textContent = msg.senderName + ': ';
+                    li.appendChild(nameSpan);
+                    li.appendChild(document.createTextNode(msg.text));
+                    chatMessagesList.appendChild(li);
+                });
+                chatMessagesList.scrollTop = chatMessagesList.scrollHeight; // Scroll to bottom
             }
         }
 
@@ -399,11 +502,9 @@
 
             const index = e.target.getAttribute('data-index');
 
-            // Get the current game state from the database
             const snapshot = await get(gameRef);
             const gameState = snapshot.val();
 
-            // Check if it's the current player's turn and the cell is empty
             if (gameState.currentPlayer === myPlayer && gameState.board[index] === '' && gameState.status === 'in-progress') {
                 const newBoard = [...gameState.board];
                 newBoard[index] = myPlayer;
@@ -423,16 +524,32 @@
                     winner: winner ? myPlayer : null
                 };
 
-                // Update the database
                 await set(gameRef, updates);
             } else {
-                // Not your turn or invalid move
                 messageElement.textContent = "Invalid move or not your turn!";
+            }
+        }
+        
+        // Function to handle sending a chat message
+        function handleSendMessage() {
+            const messageText = chatInput.value.trim();
+            if (messageText && gameId) {
+                push(chatRef, {
+                    senderId: myUid,
+                    senderName: myName,
+                    text: messageText,
+                    timestamp: serverTimestamp()
+                });
+                chatInput.value = '';
             }
         }
 
         // --- Event Listeners ---
         boardElement.addEventListener('click', handleCellClick);
+        
+        playerNameInput.addEventListener('input', (e) => {
+            myName = e.target.value.trim() || 'Player ' + myUid;
+        });
 
         newGameBtn.addEventListener('click', () => {
             const newId = generateGameId();
@@ -456,10 +573,21 @@
                     status: 'in-progress',
                     winner: null,
                     playerX: myPlayer,
-                    playerO: myPlayer === 'X' ? null : myUid
+                    playerO: myPlayer === 'X' ? null : myUid,
+                    playerNames: {
+                        [myUid]: myName
+                    },
+                    chat: {}
                 };
                 await set(gameRef, initialGameState);
                 resetBtn.classList.add('hidden');
+            }
+        });
+
+        chatSendBtn.addEventListener('click', handleSendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSendMessage();
             }
         });
 
@@ -470,7 +598,7 @@
             if (id) {
                 setupGame(id);
             } else {
-                messageElement.textContent = 'Create a new game or join one.';
+                messageElement.textContent = 'Enter your name and create a new game or join one.';
             }
         });
     </script>
