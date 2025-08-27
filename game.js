@@ -28,6 +28,7 @@ let playerSpeed = 300;
 let jumpVelocity = 500;
 let myPlayerName = "Player";
 let chatOpen = false;
+let game;
 
 // Phaser Game Configuration
 const config = {
@@ -49,9 +50,6 @@ const config = {
     }
 };
 
-// The game object is now created globally
-let game = new Phaser.Game(config);
-
 // Wait for the DOM content to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     const startButton = document.getElementById('start-button');
@@ -63,8 +61,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = nameInput.value.trim();
         if (name) {
             myPlayerName = name;
-            // Hide the intro UI and show the game container
+            // CORRECTED: Hide the intro UI
             introUI.style.display = 'none';
+            // CORRECTED: Start the Phaser game here
+            game = new Phaser.Game(config);
+            // Show the game container and mobile UI after the game has started
             gameContainer.style.display = 'block';
             document.getElementById('mobile-ui').style.display = 'flex';
             setupChat();
@@ -187,23 +188,24 @@ function update() {
         }
     }
 
-    player.body.setVelocityX(velocityX);
+    if (player && player.body) {
+        player.body.setVelocityX(velocityX);
+        if (player.label) {
+            player.label.x = player.x;
+            player.label.y = player.y - 40;
+        }
 
-    if (player && player.label) {
-        player.label.x = player.x;
-        player.label.y = player.y - 40;
-    }
-
-    if (myPlayerId && player) {
-        const playerRef = ref(db, 'players/' + myPlayerId);
-        set(playerRef, {
-            x: player.x,
-            y: player.y,
-            color: player.fillColor,
-            name: player.label.text,
-            vx: player.body.velocity.x,
-            vy: player.body.velocity.y
-        });
+        if (myPlayerId) {
+            const playerRef = ref(db, 'players/' + myPlayerId);
+            set(playerRef, {
+                x: player.x,
+                y: player.y,
+                color: player.fillColor,
+                name: player.label.text,
+                vx: player.body.velocity.x,
+                vy: player.body.velocity.y
+            });
+        }
     }
 }
 
