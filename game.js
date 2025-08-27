@@ -1,13 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getDatabase, ref, onValue, set, push, remove } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
-import Phaser from "https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js";
-import nipplejs from "https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.1/nipplejs.min.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyAy-mx305Zbi5gQ8fIqSI2OsuV61DRhqDM",
     authDomain: "dmultiplayergame-b444e.firebaseapp.com",
-    databaseURL: "https://dmultiplayergame-b444e-default-rtdb.firebaseio.com",
     projectId: "dmultiplayergame-b444e",
     storageBucket: "dmultiplayergame-b444e.firebasestorage.app",
     messagingSenderId: "318883314875",
@@ -26,9 +23,6 @@ let joystick, joystickData = { x: 0, y: 0 };
 let myPlayerId;
 let playerSpeed = 300;
 let jumpVelocity = 500;
-let myPlayerName = "Player";
-let chatOpen = false;
-let game;
 
 // Phaser Game Configuration
 const config = {
@@ -50,59 +44,43 @@ const config = {
     }
 };
 
-// Wait for the DOM content to be fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const startButton = document.getElementById('start-button');
-    const nameInput = document.getElementById('name-input');
-    const introUI = document.getElementById('intro-ui');
-    const gameContainer = document.getElementById('game-container');
-
-    startButton.addEventListener('click', () => {
-        const name = nameInput.value.trim();
-        if (name) {
-            myPlayerName = name;
-            // CORRECTED: Hide the intro UI
-            introUI.style.display = 'none';
-            // CORRECTED: Start the Phaser game here
-            game = new Phaser.Game(config);
-            // Show the game container and mobile UI after the game has started
-            gameContainer.style.display = 'block';
-            document.getElementById('mobile-ui').style.display = 'flex';
-            setupChat();
-        } else {
-            alert("Please enter a name!");
-        }
-    });
-
-    nameInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            startButton.click();
-        }
-    });
-});
+// The fix: Access Phaser from the global window object
+window.onload = () => {
+    const game = new Phaser.Game(config);
+};
 
 function preload() {
     // This is where you would load sprites, etc.
 }
 
 function create() {
-    this.physics.world.setBounds(0, 0, this.game.config.width, this.game.config.height);
+    // Prompt for nickname before anything else
+    const myPlayerName = prompt("Enter your name:", "Player");
+    
     this.cameras.main.setBackgroundColor('#87ceeb');
 
-    const ground = this.add.rectangle(this.game.config.width / 2, this.game.config.height - 50, this.game.config.width, 100, 0x008000);
+    // Create static ground
+    const ground = this.add.rectangle(0, this.game.config.height - 50, this.game.config.width * 2, 100, 0x008000);
     this.physics.add.existing(ground, true);
 
+    // Get a unique player ID
     myPlayerId = push(ref(db, 'players')).key;
+    
+    // Choose a random color for the player
     const myPlayerColor = Math.random() * 0xffffff;
-
+    
+    // Create the local player's block
     const myPlayerBlock = this.add.rectangle(Phaser.Math.Between(100, this.game.config.width - 100), 50, 40, 60, myPlayerColor);
     this.physics.add.existing(myPlayerBlock);
     myPlayerBlock.body.collideWorldBounds = true;
+    myPlayerBlock.body.gravity.y = 800;
     player = myPlayerBlock;
 
+    // Create the player's name label
     const myPlayerLabel = this.add.text(0, 0, myPlayerName, { fontSize: '16px', fill: '#ffffff', backgroundColor: '#00000088' }).setOrigin(0.5);
     player.label = myPlayerLabel;
 
+    // Add local player to the Firebase database
     set(ref(db, 'players/' + myPlayerId), {
         x: player.x,
         y: player.y,
@@ -112,58 +90,57 @@ function create() {
         vy: 0
     });
 
+    // Keyboard input for desktop
     cursors = this.input.keyboard.createCursorKeys();
 
+    // Mobile UI Setup
     if (this.sys.game.device.os.android || this.sys.game.device.os.iOS) {
         setupMobileUI(this);
     }
 
-    this.physics.add.collider(player, ground);
-
+    // Listen for other players
     onValue(ref(db, 'players'), (snapshot) => {
         const playersData = snapshot.val();
         if (playersData) {
-            const currentPlayers = new Set(Object.keys(playersData));
-
             Object.keys(playersData).forEach(playerId => {
                 if (playerId !== myPlayerId) {
                     if (!players[playerId]) {
+                        // Create new remote player
                         const remotePlayer = this.add.rectangle(playersData[playerId].x, playersData[playerId].y, 40, 60, playersData[playerId].color);
                         this.physics.add.existing(remotePlayer);
                         remotePlayer.body.immovable = true;
                         remotePlayer.label = this.add.text(0, 0, playersData[playerId].name, { fontSize: '16px', fill: '#ffffff', backgroundColor: '#00000088' }).setOrigin(0.5);
                         players[playerId] = remotePlayer;
                     }
+                    // Update remote player position
                     players[playerId].x = playersData[playerId].x;
                     players[playerId].y = playersData[playerId].y;
                     players[playerId].body.setVelocityX(playersData[playerId].vx);
                     players[playerId].body.setVelocityY(playersData[playerId].vy);
-
+                    
+                    // Update label position
                     players[playerId].label.x = players[playerId].x;
                     players[playerId].label.y = players[playerId].y - 40;
-                }
-            });
-
-            Object.keys(players).forEach(playerId => {
-                if (!currentPlayers.has(playerId)) {
-                    if (players[playerId]) {
-                        players[playerId].destroy();
-                        players[playerId].label.destroy();
-                        delete players[playerId];
-                    }
-                }
-            });
-        } else {
-            Object.keys(players).forEach(playerId => {
-                if (players[playerId]) {
-                    players[playerId].destroy();
-                    players[playerId].label.destroy();
-                    delete players[playerId];
                 }
             });
         }
     });
 
+    // Clean up when a player leaves
+    onValue(ref(db, 'players'), (snapshot) => {
+        const playersData = snapshot.val();
+        Object.keys(players).forEach(playerId => {
+            if (!playersData || !playersData[playerId]) {
+                if (players[playerId]) {
+                    players[playerId].destroy();
+                    players[playerId].label.destroy();
+                    delete players[playerId];
+                }
+            }
+        });
+    });
+
+    // Clean up on window close or refresh
     window.addEventListener('beforeunload', () => {
         remove(ref(db, 'players/' + myPlayerId));
     });
@@ -171,49 +148,50 @@ function create() {
 
 function update() {
     let velocityX = 0;
-
-    if (!chatOpen) {
-        if (cursors.left.isDown) {
-            velocityX = -playerSpeed;
-        } else if (cursors.right.isDown) {
-            velocityX = playerSpeed;
-        }
-
-        if (joystickData.x !== 0) {
-            velocityX = joystickData.x * playerSpeed;
-        }
-
-        if (Phaser.Input.Keyboard.JustDown(cursors.up) && player.body.blocked.down) {
-            player.body.setVelocityY(-jumpVelocity);
-        }
+    
+    // Desktop Input
+    if (cursors.left.isDown) {
+        velocityX = -playerSpeed;
+    } else if (cursors.right.isDown) {
+        velocityX = playerSpeed;
     }
-
-    if (player && player.body) {
-        player.body.setVelocityX(velocityX);
-        if (player.label) {
-            player.label.x = player.x;
-            player.label.y = player.y - 40;
-        }
-
-        if (myPlayerId) {
-            const playerRef = ref(db, 'players/' + myPlayerId);
-            set(playerRef, {
-                x: player.x,
-                y: player.y,
-                color: player.fillColor,
-                name: player.label.text,
-                vx: player.body.velocity.x,
-                vy: player.body.velocity.y
-            });
-        }
+    
+    // Mobile Input
+    if (joystickData.x > 0) {
+        velocityX = playerSpeed * joystickData.x;
+    } else if (joystickData.x < 0) {
+        velocityX = playerSpeed * joystickData.x;
     }
+    
+    // Jump Input
+    if (Phaser.Input.Keyboard.JustDown(cursors.up) && player.body.blocked.down) {
+        player.body.setVelocityY(-jumpVelocity);
+    }
+    
+    player.body.setVelocityX(velocityX);
+    
+    // Update player label position
+    player.label.x = player.x;
+    player.label.y = player.y - 40;
+
+    // Update Firebase with local player's data if it has changed
+    const playerRef = ref(db, 'players/' + myPlayerId);
+    set(playerRef, {
+        x: player.x,
+        y: player.y,
+        color: player.fillColor,
+        name: player.label.text,
+        vx: player.body.velocity.x,
+        vy: player.body.velocity.y
+    });
 }
 
 function setupMobileUI(scene) {
     const joystickContainer = document.getElementById('joystick-container');
     const jumpButton = document.getElementById('jump-button');
-    document.getElementById('mobile-ui').style.display = 'flex';
+    document.getElementById('mobile-ui').style.pointerEvents = 'auto';
 
+    // Joystick setup
     const options = {
         zone: joystickContainer,
         mode: 'static',
@@ -221,61 +199,20 @@ function setupMobileUI(scene) {
         color: 'white',
         multitouch: true
     };
-
     joystick = nipplejs.create(options);
     joystick.on('move', (evt, data) => {
-        joystickData = data.vector;
+        joystickData.x = data.vector.x;
+        joystickData.y = data.vector.y;
     });
     joystick.on('end', () => {
         joystickData.x = 0;
         joystickData.y = 0;
     });
-
+    
+    // Jump button setup
     jumpButton.addEventListener('pointerdown', () => {
-        if (player && player.body.blocked.down) {
+        if (player.body.blocked.down) {
             player.body.setVelocityY(-jumpVelocity);
-        }
-    });
-}
-
-function setupChat() {
-    const chatToggleButton = document.getElementById('chat-toggle-button');
-    const chatUI = document.getElementById('chat-ui');
-    const chatInput = document.getElementById('chat-input');
-    const chatMessages = document.getElementById('chat-messages');
-
-    chatToggleButton.addEventListener('click', () => {
-        chatOpen = !chatOpen;
-        chatUI.style.display = chatOpen ? 'flex' : 'none';
-        document.getElementById('mobile-ui').style.display = chatOpen ? 'none' : 'flex';
-        if (chatOpen) {
-            chatInput.focus();
-        }
-    });
-
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && chatInput.value.trim() !== '') {
-            const message = chatInput.value.trim();
-            push(ref(db, 'chat'), {
-                name: myPlayerName,
-                message: message,
-                timestamp: Date.now()
-            });
-            chatInput.value = '';
-        }
-    });
-
-    onValue(ref(db, 'chat'), (snapshot) => {
-        const messagesData = snapshot.val();
-        chatMessages.innerHTML = '';
-        if (messagesData) {
-            const sortedMessages = Object.values(messagesData).sort((a, b) => a.timestamp - b.timestamp);
-            sortedMessages.forEach(msg => {
-                const p = document.createElement('p');
-                p.textContent = `${msg.name}: ${msg.message}`;
-                chatMessages.appendChild(p);
-            });
-            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     });
 }
