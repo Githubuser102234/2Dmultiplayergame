@@ -24,6 +24,8 @@ let myPlayerId;
 let playerSpeed = 300;
 let jumpVelocity = 500;
 
+let game; // Declare game globally to access it
+
 // Phaser Game Configuration
 const config = {
     type: Phaser.AUTO,
@@ -46,17 +48,37 @@ const config = {
 
 // The fix: Access Phaser from the global window object
 window.onload = () => {
-    const game = new Phaser.Game(config);
+    const nicknameModal = document.getElementById('nickname-modal');
+    const nicknameInput = document.getElementById('nickname-input');
+    const startGameButton = document.getElementById('start-game-button');
+
+    // Add event listener for the start button
+    startGameButton.addEventListener('click', () => {
+        const myPlayerName = nicknameInput.value.trim() || "Player";
+        if (myPlayerName) {
+            // Hide the modal
+            nicknameModal.classList.add('hidden');
+            // Create and start the game with the provided nickname
+            config.scene.create = function() {
+                create.call(this, myPlayerName);
+            };
+            game = new Phaser.Game(config);
+        }
+    });
+
+    // Handle Enter key in the input field
+    nicknameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            startGameButton.click();
+        }
+    });
 };
 
 function preload() {
     // This is where you would load sprites, etc.
 }
 
-function create() {
-    // Prompt for nickname before anything else
-    const myPlayerName = prompt("Enter your name:", "Player");
-    
+function create(myPlayerName) {
     this.cameras.main.setBackgroundColor('#87ceeb');
 
     // Create static ground
