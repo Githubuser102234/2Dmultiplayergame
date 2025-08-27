@@ -45,7 +45,6 @@ const config = {
 };
 
 // The fix: Access Phaser from the global window object
-// This ensures the game is created only after the Phaser library is loaded
 window.onload = () => {
     const game = new Phaser.Game(config);
 };
@@ -55,6 +54,9 @@ function preload() {
 }
 
 function create() {
+    // Prompt for nickname before anything else
+    const myPlayerName = prompt("Enter your name:", "Player");
+    
     this.cameras.main.setBackgroundColor('#87ceeb');
 
     // Create static ground
@@ -66,7 +68,6 @@ function create() {
     
     // Choose a random color for the player
     const myPlayerColor = Math.random() * 0xffffff;
-    const myPlayerName = prompt("Enter your name:", "Player");
     
     // Create the local player's block
     const myPlayerBlock = this.add.rectangle(Phaser.Math.Between(100, this.game.config.width - 100), 50, 40, 60, myPlayerColor);
@@ -139,7 +140,7 @@ function create() {
         });
     });
 
-    // Clean up on window close
+    // Clean up on window close or refresh
     window.addEventListener('beforeunload', () => {
         remove(ref(db, 'players/' + myPlayerId));
     });
@@ -196,6 +197,7 @@ function setupMobileUI(scene) {
         mode: 'static',
         position: { left: '50%', top: '50%' },
         color: 'white',
+        multitouch: true
     };
     joystick = nipplejs.create(options);
     joystick.on('move', (evt, data) => {
