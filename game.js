@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (name) {
             myPlayerName = name;
             introUI.style.display = 'none';
-            // Corrected: Start the Phaser game here
+            // CORRECTED: Start the Phaser game here
             game = new Phaser.Game(config);
             // Show the game container and mobile UI after the game has started
             gameContainer.style.display = 'block';
@@ -96,10 +96,10 @@ function create() {
 
     // Get a unique player ID
     myPlayerId = push(ref(db, 'players')).key;
-    
+
     // Choose a random color for the player
     const myPlayerColor = Math.random() * 0xffffff;
-    
+
     // Create the local player's block
     const myPlayerBlock = this.add.rectangle(Phaser.Math.Between(100, this.game.config.width - 100), 50, 40, 60, myPlayerColor);
     this.physics.add.existing(myPlayerBlock);
@@ -127,7 +127,7 @@ function create() {
     if (this.sys.game.device.os.android || this.sys.game.device.os.iOS) {
         setupMobileUI(this);
     }
-    
+
     // Corrected: Add a collider between the player and the ground
     this.physics.add.collider(player, ground);
 
@@ -137,7 +137,7 @@ function create() {
         if (playersData) {
             // Corrected: Create a set of current player IDs to check for removed players
             const currentPlayers = new Set(Object.keys(playersData));
-            
+
             Object.keys(playersData).forEach(playerId => {
                 if (playerId !== myPlayerId) {
                     if (!players[playerId]) {
@@ -153,13 +153,13 @@ function create() {
                     players[playerId].y = playersData[playerId].y;
                     players[playerId].body.setVelocityX(playersData[playerId].vx);
                     players[playerId].body.setVelocityY(playersData[playerId].vy);
-                    
+
                     // Update label position
                     players[playerId].label.x = players[playerId].x;
                     players[playerId].label.y = players[playerId].y - 40;
                 }
             });
-            
+
             // Clean up when a player leaves
             Object.keys(players).forEach(playerId => {
                 if (!currentPlayers.has(playerId)) {
@@ -190,7 +190,7 @@ function create() {
 
 function update() {
     let velocityX = 0;
-    
+
     // Disable player movement if chat is open
     if (!chatOpen) {
         // Desktop Input
@@ -199,22 +199,22 @@ function update() {
         } else if (cursors.right.isDown) {
             velocityX = playerSpeed;
         }
-        
+
         // Mobile Input
         // Corrected: Use joystick data for mobile speed
         if (joystickData.x !== 0) {
             velocityX = joystickData.x * playerSpeed;
         }
-        
+
         // Jump Input
         if (Phaser.Input.Keyboard.JustDown(cursors.up) && player.body.blocked.down) {
             player.body.setVelocityY(-jumpVelocity);
         }
     }
-    
+
     // Corrected: Set velocity directly on the player body
     player.body.setVelocityX(velocityX);
-    
+
     // Corrected: Check if player and label exist before updating
     if (player && player.label) {
         // Update player label position
@@ -250,7 +250,7 @@ function setupMobileUI(scene) {
         color: 'white',
         multitouch: true
     };
-    
+
     joystick = nipplejs.create(options);
     joystick.on('move', (evt, data) => {
         // Corrected: Pass joystick data to global variable
@@ -260,7 +260,7 @@ function setupMobileUI(scene) {
         joystickData.x = 0;
         joystickData.y = 0;
     });
-    
+
     // Jump button setup
     jumpButton.addEventListener('pointerdown', () => {
         if (player && player.body.blocked.down) {
