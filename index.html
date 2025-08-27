@@ -499,6 +499,10 @@
         
         // Function to save a drawing to Firestore
         async function saveDrawingToFirestore(drawingData) {
+            if (!userId) {
+                console.error("User not authenticated. Cannot save drawing.");
+                return;
+            }
             try {
                 const drawingsRef = collection(db, 'drawings');
                 await addDoc(drawingsRef, drawingData);
