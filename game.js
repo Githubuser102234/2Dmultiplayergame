@@ -46,27 +46,32 @@ const config = {
     }
 };
 
-// The fix: Access Phaser from the global window object
+// Handle the nickname prompt and game start
 window.onload = () => {
     const nicknameModal = document.getElementById('nickname-modal');
     const nicknameInput = document.getElementById('nickname-input');
     const startGameButton = document.getElementById('start-game-button');
+    const gameContainer = document.getElementById('game-container');
+    const mobileUi = document.getElementById('mobile-ui');
 
-    // Add event listener for the start button
     startGameButton.addEventListener('click', () => {
         const myPlayerName = nicknameInput.value.trim() || "Player";
         if (myPlayerName) {
-            // Hide the modal
+            // Hide the modal and show the game UI
             nicknameModal.classList.add('hidden');
-            // Create and start the game with the provided nickname
+            gameContainer.classList.remove('hidden');
+            mobileUi.classList.remove('hidden');
+            
+            // Reassign the create function with the nickname
             config.scene.create = function() {
                 create.call(this, myPlayerName);
             };
+            
+            // Create and start the game
             game = new Phaser.Game(config);
         }
     });
 
-    // Handle Enter key in the input field
     nicknameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             startGameButton.click();
